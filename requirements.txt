@@ -1,1 +1,16 @@
+# Core dependencies
+torch
+silero
+pydub
+
+# Telegram clients
+telethon
+pyrogram
+PySocks
+
+# Web scraping
+playwright
+num2words
+
+# Environment variables
 python-dotenv

@@ -52,20 +52,34 @@ python ttsb.py --name output_name
 - Telethon / Pyrogram
 - pydub
 - PySocks
+- Playwright
+- num2words
+- python-dotenv
 
 ## Установка зависимостей
 
 ```bash
-pip install torch silero pydub telethon pyrogram pysocks
+pip install -r requirements.txt
+```
+
+После установки зависимостей необходимо установить браузеры для Playwright:
+
+```bash
+playwright install
 ```
 
 ## Настройка
 
-Перед использованием необходимо указать свои данные Telegram API в файлах:
-- `API_ID` - ID приложения
-- `API_HASH` - хеш приложения
+1. Создайте файл `.env` в корне проекта со следующим содержимым:
 
-Получить можно на https://my.telegram.org/apps
+```env
+API_ID=ваш_api_id
+API_HASH=ваш_api_hash
+```
+
+2. Получить API_ID и API_HASH можно на https://my.telegram.org/apps
+
+**Важно:** Файл `.env` автоматически исключён из Git и не будет отправлен в репозиторий.
 
 ## Структура проекта
 
