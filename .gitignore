@@ -1,0 +1,5 @@
+conda/
+ffmpeg.exe
+ffprobe.exe
+ffplay.exe
+*.exe
