@@ -10,6 +10,9 @@ ffplay.exe
 # Audio files
 *.mp3
 
+# Environment variables
+.env
+
 # Telegram session files
 *.session
 *.session-journal

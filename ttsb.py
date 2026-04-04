@@ -8,10 +8,14 @@ from pydub import AudioSegment  # Обработка аудио файлов
 from silero import silero_tts  # Модель синтеза речи Silero
 from pyrogram import Client  # Telegram клиент Pyrogram
 import socks  # Поддержка SOCKS прокси
+from dotenv import load_dotenv  # Загрузка переменных окружения из .env
+
+# Загружаем переменные окружения из .env файла
+load_dotenv()
 
 # ================= НАСТРОЙКИ (Твои данные) =================
-API_ID = 22539624  # ID приложения Telegram API
-API_HASH = 'edaefad085cceec2bc935abe4f739235'  # Хеш приложения Telegram API
+API_ID = int(os.getenv('API_ID'))  # ID приложения Telegram API из .env
+API_HASH = os.getenv('API_HASH')  # Хеш приложения Telegram API из .env
 
 # Настройка прокси для Kurigram (SOCKS5 прокси на локальном хосте)
 proxy_settings = {
