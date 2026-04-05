@@ -1,5 +1,7 @@
 # Импорт необходимых библиотек
 import os  # Работа с файловой системой
+import warnings  # Подавление предупреждений
+warnings.filterwarnings('ignore', category=UserWarning, message='.*TypedStorage is deprecated.*')
 import torch  # PyTorch для работы с нейросетями
 import argparse  # Парсинг аргументов командной строки
 import time  # Измерение времени выполнения
