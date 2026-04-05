@@ -14,3 +14,6 @@ num2words
 
 # Environment variables
 python-dotenv
+
+# Progress bars and utilities
+tqdm
