@@ -167,7 +167,7 @@ async def main():
             if not args.clean:
                 print("Запускаю TTS...")
                 # Формируем команду для запуска скрипта озвучки
-                cmd = f'"{sys.executable}" ttsp.py --input ranobe.txt --start {args.start} --end {args.end}'
+                cmd = f'"{sys.executable}" ttsp.py --input ranobe.txt --start {args.start} --end {args.end} --workers 6'
                 os.system(cmd)  # Выполняем команду
             else:
                 print("🔇 Озвучка пропущена (флаг --clean)")
