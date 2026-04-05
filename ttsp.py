@@ -251,6 +251,10 @@ def generate_audio():
         bool: True если генерация успешна, False при ошибке
     """
     print(f"🚀 Инициализация Silero на {DEVICE}...")
+    
+    # Устанавливаем директорию для кэша моделей в системную папку PyTorch
+    torch.hub.set_dir(torch.hub.get_dir())
+    
     # Загружаем модель Silero TTS
     model, _ = silero_tts(language=LANGUAGE, speaker=MODEL_ID)
     model.to(DEVICE)  # Переносим на GPU/CPU
