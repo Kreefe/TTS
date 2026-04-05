@@ -1,14 +1,34 @@
+# Игнорировать всё по умолчанию
+*
+
+# Но отслеживать Python скрипты
+!*.py
+
+# Отслеживать конфигурационные файлы
+!requirements.txt
+!README.md
+!.gitignore
+!*.yml
+!*.yaml
+
+# Игнорировать папки с номерами (сгенерированные файлы)
+[0-9]*-[0-9]*/
+
 # Conda environment
 conda/
 
 # FFmpeg binaries
-ffmpeg.exe
-ffprobe.exe
-ffplay.exe
 *.exe
 
 # Audio files
 *.mp3
+*.wav
+*.ogg
+*.flac
+
+# Text files (кроме README)
+*.txt
+!requirements.txt
 
 # Environment variables
 .env

@@ -6,6 +6,7 @@ import argparse  # Парсинг аргументов командной стр
 import re  # Регулярные выражения для обработки текста
 from playwright.async_api import async_playwright  # Автоматизация браузера
 from num2words import num2words  # Конвертация цифр в слова
+import time  # Для замера времени выполнения
 
 # --- КОНФИГ ПО УМОЛЧАНИЮ ---
 DEFAULT_ID = "163577--pekchakkaii-manna-mweota"  # ID ранобэ на сайте по умолчанию
@@ -47,10 +48,12 @@ async def grab_chapter(browser, base_url, bid, chapter_num):
     Returns:
         str: Текст главы с заголовком или None при неудаче
     """
+    t_start = time.time()
+    
     page = await browser.new_page()  # Создаем новую вкладку браузера
     url = f"{base_url}/read/v1/c{chapter_num}?bid={bid}"  # Формируем URL главы
     
-    max_retries = 3  # Максимальное количество попыток загрузки одной главы
+    max_retries = 10  # Максимальное количество попыток загрузки одной главы
     
     # Цикл повторных попыток
     for attempt in range(1, max_retries + 1):
@@ -62,18 +65,21 @@ async def grab_chapter(browser, base_url, bid, chapter_num):
             await page.goto(url, wait_until="commit", timeout=2000)
             
             # Ждем появления текста главы на странице
-            await page.wait_for_selector('p.node-paragraph', timeout=1500)
+            await page.wait_for_selector('p.node-paragraph', timeout=2000)
             
             # Если дошли сюда — страница загрузилась успешно!
-            # Пытаемся извлечь заголовок главы
+            # Пытаемся извлечь заголовок главы (используем locator для скорости)
             try:
-                full_title = await page.inner_text('h1.mh_cg')
+                # locator с минимальным таймаутом - если h1 есть, заберет мгновенно
+                full_title = await page.locator('h1').first.text_content(timeout=100)
                 full_title = full_title.strip()
+                if not full_title:  # Если заголовок пустой
+                    full_title = f"Глава {chapter_num}"
             except:
                 # Если заголовок не найден, используем стандартный формат
                 full_title = f"Глава {chapter_num}"
-
-            print(f"🔗 Готово: {full_title}")
+            
+            print(f"🔗 Готово: {full_title}", end="")
 
             # Собираем все параграфы текста главы
             paragraphs = await page.eval_on_selector_all(
@@ -85,28 +91,33 @@ async def grab_chapter(browser, base_url, bid, chapter_num):
             
             # Формируем финальный текст главы: заголовок + параграфы
             chapter_content = f"{full_title}.\n\n" + "\n\n".join(paragraphs)
+            t_end = time.time()
+            print(f" — {t_end - t_start:.2f}с")
             return chapter_content
 
         except Exception as e:
             print(f"⚠️ Ошибка/Таймаут на главе {chapter_num} (Попытка {attempt}/{max_retries})")
             
-            # Если это была последняя попытка — сдаемся
+            # Если это была последняя попытка — останавливаем программу
             if attempt == max_retries:
-                print(f"❌ Глава {chapter_num} так и не прогрузилась. Пропускаем.")
+                print(f"❌ Глава {chapter_num} так и не прогрузилась после {max_retries} попыток.")
+                print(f"❌ КРИТИЧЕСКАЯ ОШИБКА: Остановка программы.")
                 await page.close()
-                return None
+                raise Exception(f"Не удалось загрузить главу {chapter_num}")
             
             # Пауза перед следующей попыткой
             await asyncio.sleep(1)
             # Цикл продолжится и снова выполнит page.goto (аналог F5)
 
-    return None
+    raise Exception(f"Не удалось загрузить главу {chapter_num}")
 
 async def main():
     """
     Главная асинхронная функция программы.
     Парсит главы с Ranobelib, обрабатывает текст и опционально запускает озвучку.
     """
+    t_main_start = time.time()
+    
     # Настройка парсера аргументов
     parser = argparse.ArgumentParser(description='Ranobe Grabber Pro Max')
     parser.add_argument('start', type=int, help='Начальная глава')
@@ -122,6 +133,7 @@ async def main():
     async with async_playwright() as p:
         # Запускаем браузер в headless режиме (без GUI)
         browser = await p.chromium.launch(headless=True)
+        
         all_chapters_text = []  # Список для накопления текста всех глав
         
         # Загружаем главы в указанном диапазоне
@@ -147,6 +159,9 @@ async def main():
                 f.write(final_text)
             
             print(f"✅ Файл ranobe.txt готов!")
+            
+            t_main_end = time.time()
+            print(f"⏱️ [DEBUG] ОБЩЕЕ ВРЕМЯ: {t_main_end - t_main_start:.2f}с\n")
             
             # Автоматически запускаем озвучку, если не указан флаг --clean
             if not args.clean:
