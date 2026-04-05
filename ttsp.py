@@ -16,11 +16,30 @@ from dotenv import load_dotenv  # Загрузка переменных окру
 # Загружаем переменные окружения из .env файла
 load_dotenv()
 
-# ================= НАСТРОЙКИ (Твои данные) =================
+# ============================================================
+# НАСТРОЙКИ
+# ============================================================
+
+# Telegram API
 API_ID = int(os.getenv('API_ID'))  # ID приложения Telegram API из .env
 API_HASH = os.getenv('API_HASH')  # Хеш приложения Telegram API из .env
-proxy = (socks.SOCKS5, '127.0.0.1', 10808, True)  # Настройка SOCKS5 прокси для Telethon
-# ===========================================================
+PROXY = (socks.SOCKS5, '127.0.0.1', 10808, True)  # Настройка SOCKS5 прокси для Telethon
+
+# Настройки модели TTS
+LANGUAGE = 'ru'  # Язык синтеза речи
+MODEL_ID = 'v5_ru'  # ID модели Silero для русского языка
+SPEAKER = 'kseniya'  # Голос диктора
+SAMPLE_RATE = 48000  # Частота дискретизации аудио (48 кГц)
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # Использовать GPU если доступен
+
+# Настройки обработки
+TEMP_DIR = "tts_chunks"  # Папка для временных аудио-кусков (для экономии памяти)
+CHUNK_SIZE = 512  # Каждые 512 строк сбрасываем аудио на диск для освобождения RAM
+
+# Путь к ffmpeg
+AudioSegment.converter = os.path.join(os.getcwd(), "ffmpeg.exe")
+
+# ============================================================
 
 # Настройка парсера аргументов командной строки
 parser = argparse.ArgumentParser(description='Silero TTS + Telethon Memory Optimized')
@@ -30,20 +49,10 @@ parser.add_argument('--start', type=int, help='Начальная глава')
 parser.add_argument('--end', type=int, help='Конечная глава')
 args = parser.parse_args()
 
-# Константы и настройки
+# Константы на основе аргументов
 INPUT_FILE = args.input  # Входной текстовый файл
 OUTPUT_MP3 = f"{args.name}.mp3"  # Имя выходного MP3 файла
 OUTPUT_DIR = f"{args.start}-{args.end}" if args.start and args.end else None  # Папка для глав (если указан диапазон)
-TEMP_DIR = "tts_chunks"  # Папка для временных аудио-кусков (для экономии памяти)
-CHUNK_SIZE = 512  # Каждые 512 строк сбрасываем аудио на диск для освобождения RAM
-
-# Настройки модели TTS
-language = 'ru'  # Язык синтеза речи
-model_id = 'v5_ru'  # ID модели Silero для русского языка
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # Использовать GPU если доступен
-speaker = 'kseniya'  # Голос диктора
-sample_rate = 48000  # Частота дискретизации аудио (48 кГц)
-AudioSegment.converter = os.path.join(os.getcwd(), "ffmpeg.exe")  # Путь к ffmpeg
 
 def progress_callback(current, total):
     """
@@ -66,7 +75,7 @@ async def send_via_telethon(file_path):
     print(f"\n🚀 Подключаюсь к Telegram...")
     try:
         # Создаем асинхронный контекст клиента Telethon с сохраненной сессией
-        async with TelegramClient('my_session', API_ID, API_HASH, proxy=proxy) as client:
+        async with TelegramClient('my_session', API_ID, API_HASH, proxy=PROXY) as client:
             await client.send_file(
                 'me',  # Отправка самому себе (Избранное)
                 file_path,  # Путь к файлу
@@ -135,7 +144,7 @@ def generate_audio_for_chapter(model, text, chapter_num, output_dir):
         for i, line in enumerate(lines):
             try:
                 # Генерируем аудио для строки
-                audio_tensor = model.apply_tts(text=line, speaker=speaker, sample_rate=sample_rate)
+                audio_tensor = model.apply_tts(text=line, speaker=SPEAKER, sample_rate=SAMPLE_RATE)
                 audio_data = (audio_tensor * 32767).numpy().astype('int16')
                 segment = AudioSegment(audio_data.tobytes(), frame_rate=sample_rate, sample_width=2, channels=1)
                 combined_audio += segment + AudioSegment.silent(duration=500)  # Добавляем паузу
@@ -180,10 +189,10 @@ def generate_audio():
     Returns:
         bool: True если генерация успешна, False при ошибке
     """
-    print(f"🚀 Инициализация Silero на {device}...")
+    print(f"🚀 Инициализация Silero на {DEVICE}...")
     # Загружаем модель Silero TTS
-    model, _ = silero_tts(language=language, speaker=model_id)
-    model.to(device)  # Переносим на GPU/CPU
+    model, _ = silero_tts(language=LANGUAGE, speaker=MODEL_ID)
+    model.to(DEVICE)  # Переносим на GPU/CPU
 
     # Проверяем существование входного файла
     if not os.path.exists(INPUT_FILE):
@@ -247,7 +256,7 @@ def generate_audio():
             for i, text in enumerate(lines):
                 try:
                     # Генерируем аудио для строки
-                    audio_tensor = model.apply_tts(text=text, speaker=speaker, sample_rate=sample_rate)
+                    audio_tensor = model.apply_tts(text=text, speaker=SPEAKER, sample_rate=SAMPLE_RATE)
                     audio_data = (audio_tensor * 32767).numpy().astype('int16')
                     segment = AudioSegment(audio_data.tobytes(), frame_rate=sample_rate, sample_width=2, channels=1)
                     combined_audio += segment + AudioSegment.silent(duration=500)
