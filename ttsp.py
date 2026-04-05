@@ -146,7 +146,7 @@ def generate_audio_for_chapter(model, text, chapter_num, output_dir):
                 # Генерируем аудио для строки
                 audio_tensor = model.apply_tts(text=line, speaker=SPEAKER, sample_rate=SAMPLE_RATE)
                 audio_data = (audio_tensor * 32767).numpy().astype('int16')
-                segment = AudioSegment(audio_data.tobytes(), frame_rate=sample_rate, sample_width=2, channels=1)
+                segment = AudioSegment(audio_data.tobytes(), frame_rate=SAMPLE_RATE, sample_width=2, channels=1)
                 combined_audio += segment + AudioSegment.silent(duration=500)  # Добавляем паузу
                 
                 # Лог прогресса каждые 50 строк
@@ -258,7 +258,7 @@ def generate_audio():
                     # Генерируем аудио для строки
                     audio_tensor = model.apply_tts(text=text, speaker=SPEAKER, sample_rate=SAMPLE_RATE)
                     audio_data = (audio_tensor * 32767).numpy().astype('int16')
-                    segment = AudioSegment(audio_data.tobytes(), frame_rate=sample_rate, sample_width=2, channels=1)
+                    segment = AudioSegment(audio_data.tobytes(), frame_rate=SAMPLE_RATE, sample_width=2, channels=1)
                     combined_audio += segment + AudioSegment.silent(duration=500)
                     
                     # Лог прогресса каждые 50 строк
