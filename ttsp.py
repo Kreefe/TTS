@@ -258,6 +258,10 @@ def generate_audio():
     # Загружаем модель Silero TTS
     model, _ = silero_tts(language=LANGUAGE, speaker=MODEL_ID)
     model.to(DEVICE)  # Переносим на GPU/CPU
+    
+    # Удаляем файл latest_silero_models.yml после загрузки модели
+    if os.path.exists('latest_silero_models.yml'):
+        os.remove('latest_silero_models.yml')
 
     # Проверяем существование входного файла
     if not os.path.exists(INPUT_FILE):
@@ -395,3 +399,4 @@ async def main():
 # Точка входа в программу
 if __name__ == "__main__":
     asyncio.run(main())  # Запускаем асинхронную главную функцию
+
