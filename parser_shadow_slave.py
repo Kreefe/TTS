@@ -9,8 +9,8 @@ from num2words import num2words  # Конвертация цифр в слова
 import time  # Для замера времени выполнения
 
 # --- КОНФИГ ПО УМОЛЧАНИЮ ---
-DEFAULT_ID = "163577--pekchakkaii-manna-mweota"  # ID ранобэ ЯСГУ
-DEFAULT_BID = "18938"  # ID переводчика ЯСГУ
+DEFAULT_ID = "122448--shadow-slave"  # ID ранобэ Shadow Slave на сайте
+DEFAULT_BID = "13303"  # ID закладки (bookmark ID) для Shadow Slave
 
 def clean_and_textify(text):
     """
@@ -37,7 +37,7 @@ def clean_and_textify(text):
 async def grab_chapter(browser, base_url, bid, chapter_num):
     """
     Загружает главу с сайта Ranobelib с механизмом повторных попыток.
-    Если загрузка не удалась — перезагружает страницу (до 3 раз).
+    Если загрузка не удалась — перезагружает страницу (до 10 раз).
     
     Args:
         browser: Экземпляр браузера Playwright
@@ -65,7 +65,8 @@ async def grab_chapter(browser, base_url, bid, chapter_num):
             await page.goto(url, wait_until="commit", timeout=2000)
             
             # Ждем появления текста главы на странице
-            await page.wait_for_selector('p.node-paragraph', timeout=2000)
+            # ИСПРАВЛЕНО: используем селектор для Shadow Slave (data-paragraph-index)
+            await page.wait_for_selector('p[data-paragraph-index]', timeout=2000)
             
             # Если дошли сюда — страница загрузилась успешно!
             # Пытаемся извлечь заголовок главы (используем locator для скорости)
@@ -82,8 +83,9 @@ async def grab_chapter(browser, base_url, bid, chapter_num):
             print(f"🔗 Готово: {full_title}", end="")
 
             # Собираем все параграфы текста главы
+            # ИСПРАВЛЕНО: используем селектор для Shadow Slave (data-paragraph-index)
             paragraphs = await page.eval_on_selector_all(
-                'p.node-paragraph',  # CSS селектор параграфов
+                'p[data-paragraph-index]',  # CSS селектор параграфов для Shadow Slave
                 "nodes => nodes.map(n => n.innerText)"  # JavaScript для извлечения текста
             )
             
@@ -119,7 +121,7 @@ async def main():
     t_main_start = time.time()
     
     # Настройка парсера аргументов
-    parser = argparse.ArgumentParser(description='Ranobe Grabber Pro Max')
+    parser = argparse.ArgumentParser(description='Ranobe Grabber Pro Max - Shadow Slave Edition')
     parser.add_argument('start', type=int, help='Начальная глава')
     parser.add_argument('end', type=int, help='Конечная глава')
     parser.add_argument('--id', type=str, default=DEFAULT_ID, help='ID ранобэ на сайте')
